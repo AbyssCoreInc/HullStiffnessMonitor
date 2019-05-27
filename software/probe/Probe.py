@@ -33,16 +33,28 @@ def main():
 	conf = Configuration()
 	conf.readConfiguration()
 
-
 	mBroker = MessageBroker(conf)
 	mBroker.connect()
-	cam.setMessageBroker(mBroker)
-	cam.setImageNumber(images)
-	initiateThreads(mBroker,lensHeater,conf)
+
+	analog = AnalogConverter()
+	accelerometer = Accelerometer(mBroker)
+	
+	count = 0
+	message = ""
+	#initiateThreads(mBroker,lensHeater,conf)
 	ts = time.time()
 	print("main: going in the foreverloop (images="+str(images)+")")
 	while (1):
-		sendData()
+		message = "%f:%f:%f:%f:%f"%accelerometer.getAccelerationVector(),0,0
+		mBroker.sendData(message)
+		message = ""
+		
+		if (sount == 10):
+			message = "bat_v:"+str(analog.getBatteryVoltage())
+			mBroker.sendData(message)
+			message = ""
+			count = 0
+		count = count + 1
 
 	print("main: exiting the foreverloop")
 	return 0

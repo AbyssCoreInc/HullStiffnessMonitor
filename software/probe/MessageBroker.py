@@ -4,12 +4,9 @@ import time
 import datetime
 from datetime import datetime, date, timedelta
 from pytz import timezone
+import socket
 
 class MessageBroker:
-	mqtturl = "null"
-	uname = "name"
-	passwd = "passwd"
-	type = "MQTT"
 	server_ip = ""
 	server_port = ""
 	
@@ -31,7 +28,9 @@ class MessageBroker:
 			
 	def connect(self):
 		print("DataTransmitter.connect connecting to mqtt broker ", self.mqtturl)
-		self.client.connect(self.server_ip,self.server_port)
+		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+			s.connect((self.server_ip, self.server_port))
+		print('Received', repr(data))
 		print("DataTransmitter.connect ready")
 	
 	def getTimeStamp(self):
@@ -43,10 +42,11 @@ class MessageBroker:
 	
 
 	def transmitdata(self,data):
-		print("DataTransmitter.transmitdata msg:"+data)
-		datastr = str(data)
-		datastr = datastr.replace("'","\"")
-	
+		print("DataTransmitter.transmitdata msg: "+data)
+		s.sendall(data)
+		receive = s.recv(1024)
+		print("DataTransmitter.transmitdata received:"+data)
+
 
 	def worker(self):
 		self.client.subscribe("CameraDolly/ControlMessage")
