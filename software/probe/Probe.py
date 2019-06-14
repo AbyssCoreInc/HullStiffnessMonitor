@@ -20,7 +20,7 @@ def btn2_callback(channel):
 	print("falling edge detected on button 2")
 
 def pwr_callback(channel):  
-        print("falling edge detected on power")
+	print("falling edge detected on power")
 	os.system('shutdown -h now')
 
 def setGPIO():
