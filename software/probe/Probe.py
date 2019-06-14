@@ -14,13 +14,13 @@ from Accelerometer import Accelerometer
 from VisualDetector import VisualDetector
 
 def btn1_callback(channel):
-	print "falling edge detected on button 1"
+	print("falling edge detected on button 1")
 
 def btn2_callback(channel):
-	print "falling edge detected on button 2"
+	print("falling edge detected on button 2")
 
 def pwr_callback(channel):  
-        print "falling edge detected on power" 
+        print("falling edge detected on power")
 	os.system('shutdown -h now')
 
 def setGPIO():
