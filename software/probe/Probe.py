@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import subprocess
+import signal
 import sys
 import time
 import atexit
@@ -40,11 +41,18 @@ def setGPIO():
 
 	print("GPIO setup done")
 
+def signal_handler(sig, frame):
+	print('You pressed Ctrl+C!')
+	GPIO.output(4,GPIO.LOW)
+	GPIO.output(17,GPIO.LOW)
+	GPIO.output(18,GPIO.LOW)
+	sys.exit(0)
+
 def main():
 	setGPIO()
 	conf = Configuration()
 	conf.readConfiguration()
-
+	signal.signal(signal.SIGINT, signal_handler)
 	mBroker = MessageBroker(conf.getServerIP(), conf.getServerPort())
 	mBroker.connect()
 
@@ -55,16 +63,26 @@ def main():
 	count = 0
 	message = ""
 	ts = time.time()
+	led1 = False
+	GPIO.output(4,GPIO.HIGH)
 	print("main: going in the foreverloop")
 	while (1):
 		#accel = accelerometer.getAccelerationVector()
 		#message = str(accel['x'])+":"+str(accel['y'])+":"+str(accel['z'])+"0.0:0.0"
 		#mBroker.transmitdata(message)
 		message = ""
-		
-		if (count == 10):
+		vd.worker()
+		if (count == 1000000):
 			#message = "bat_v:"+str(analog.getBatteryVoltage())
 			#mBroker.transmitdata(message)
+			if(led1):
+				GPIO.output(17, GPIO.HIGH)
+				GPIO.output(18, GPIO.LOW)
+				led1 = False
+			else:
+				GPIO.output(18, GPIO.HIGH)
+				GPIO.output(17, GPIO.LOW)
+				led1 = True
 			message = ""
 			count = 0
 		count = count + 1
