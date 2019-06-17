@@ -39,6 +39,8 @@ class VisualDetector:
 		self.sat_max = 255
 		self.val_min = 200
 		self.val_max = 256
+		self.d_x = 0
+		self.d_y = 0
 		self.trail = numpy.zeros((self.cam_height, self.cam_width, 3), numpy.uint8)
 		self.previous_position = None
 
@@ -53,8 +55,8 @@ class VisualDetector:
 		"""
 		center = None
 
-		#countours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-		countours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		countours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+		#countours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 		print("countours: "+str(len(countours)))
 		# only proceed if at least one contour was found
 		if len(countours) > 0:
@@ -69,6 +71,8 @@ class VisualDetector:
 			else:
 				center = int(x), int(y)
 			print("dot center "+str(x)+","+str(y))
+			self.d_x = x
+			self.d_y = y
 			# only proceed if the radius meets a minimum size
 			if radius > 1:
 				# draw the circle and centroid on the frame,
@@ -113,57 +117,57 @@ class VisualDetector:
 
 	def worker(self):
 		count = 0
-		while True:
+		#while True:
 			# grab the current frame
-			ret, frame = self.vs.read()
-			name = "frame%d.jpg"%count
-			cv2.imwrite(name, frame)
-			count = count + 1
+		ret, frame = self.vs.read()
+#		name = "frame%d.jpg"%count
+#		cv2.imwrite(name, frame)
+		count = count + 1
 			# handle the frame from VideoCapture or VideoStream
 			#frame = frame[1] if args.get("video", False) else frame
 
 			# if we are viewing a video and we did not grab a frame,
 			# then we have reached the end of the video
-			if frame is not None:
-				print("got frame")
+		if frame is not None:
+			print("got frame")
 				#frame = imutils.resize(frame, width=600)
 				#print("blur")
-				blurred = cv2.GaussianBlur(frame, (3, 3), 0)
-				print("HSV")
-				hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-				h, s, v = cv2.split(hsv)
-				self.channels['hue'] = h
-				self.channels['saturation'] = s
-				self.channels['value'] = v
+			blurred = cv2.GaussianBlur(frame, (3, 3), 0)
+			print("HSV")
+			hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+			h, s, v = cv2.split(hsv)
+			self.channels['hue'] = h
+			self.channels['saturation'] = s
+			self.channels['value'] = v
 
 				# Threshold ranges of HSV components; storing the results in place
-				self.threshold_image("hue")
-				self.threshold_image("saturation")
-				self.threshold_image("value")
-				
+			self.threshold_image("hue")
+			self.threshold_image("saturation")
+			self.threshold_image("value")
+
 				# Perform an AND on HSV components to identify the laser!
-				self.channels['laser'] = cv2.bitwise_and(
-					self.channels['hue'],
-					self.channels['value']
-				)
-				self.channels['laser'] = cv2.bitwise_and(
-					self.channels['saturation'],
-					self.channels['laser']
-				)
+			self.channels['laser'] = cv2.bitwise_and(
+				self.channels['hue'],
+				self.channels['value']
+			)
+			self.channels['laser'] = cv2.bitwise_and(
+				self.channels['saturation'],
+				self.channels['laser']
+			)
 
 				# Merge the HSV components back together.
-				hsv = cv2.merge([
-					self.channels['hue'],
-					self.channels['saturation'],
-					self.channels['value'],
-				])
-				self.track(frame, self.channels['laser'])
-				print("construct mask")
-				name = "hsv%d.jpg"%count
-				cv2.imwrite(name, hsv)
+			hsv = cv2.merge([
+				self.channels['hue'],
+				self.channels['saturation'],
+				self.channels['value'],
+			])
+			self.track(frame, self.channels['laser'])
+			print("construct mask")
+#				name = "hsv%d.jpg"%count
+#				cv2.imwrite(name, hsv)
 
-				name = "trail%d.jpg"%count
-				cv2.imwrite(name, self.trail)
+#				name = "trail%d.jpg"%count
+#				cv2.imwrite(name, self.trail)
 				# construct a mask for the color "green", then perform
 				# a series of dilations and erosions to remove any small
 				# blobs left in the mask
@@ -202,3 +206,8 @@ class VisualDetector:
 			#		cv2.line(frame, self.pts[i - 1], self.pts[i], (0, 0, 255), thickness)
 			#	name = "final%d.jpg"%count
 			#	cv2.imwrite(name, frame)
+
+	def getX(self):
+		return self.d_x
+	def getY(self):
+		return self.d_y

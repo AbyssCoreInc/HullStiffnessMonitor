@@ -4,6 +4,7 @@ import subprocess
 import signal
 import sys
 import time
+from time import sleep
 import atexit
 import threading
 import random
@@ -53,39 +54,37 @@ def main():
 	conf = Configuration()
 	conf.readConfiguration()
 	signal.signal(signal.SIGINT, signal_handler)
-	mBroker = MessageBroker(conf.getServerIP(), conf.getServerPort())
-	mBroker.connect()
+	#mBroker = MessageBroker(conf.getServerIP(), conf.getServerPort())
+	#mBroker.connect()
 
-	#analog = AnalogConverter()
-	#accelerometer = Accelerometer(mBroker)
+	analog = AnalogConverter()
+	accelerometer = Accelerometer()
 	vd = VisualDetector()
 
 	count = 0
 	message = ""
 	ts = time.time()
 	led1 = False
-	GPIO.output(4,GPIO.HIGH)
+	#GPIO.output(4,GPIO.HIGH)
+
+	mBroker = MessageBroker(conf.getServerPort())
+	while(mBroker.getAppPort() == 0):
+		sleep(0.5)
+	GPIO.output(18, GPIO.HIGH)
+	mBroker.connect()
 	print("main: going in the foreverloop")
 	while (1):
-		#accel = accelerometer.getAccelerationVector()
-		#message = str(accel['x'])+":"+str(accel['y'])+":"+str(accel['z'])+"0.0:0.0"
-		#mBroker.transmitdata(message)
-		message = ""
 		vd.worker()
-		if (count == 1000000):
-			#message = "bat_v:"+str(analog.getBatteryVoltage())
-			#mBroker.transmitdata(message)
-			if(led1):
-				GPIO.output(17, GPIO.HIGH)
-				GPIO.output(18, GPIO.LOW)
-				led1 = False
-			else:
-				GPIO.output(18, GPIO.HIGH)
-				GPIO.output(17, GPIO.LOW)
-				led1 = True
-			message = ""
-			count = 0
-		count = count + 1
+		accel = accelerometer.getAccelerationVector()
+		message = str(accel['x'])+":"+str(accel['y'])+":"+str(accel['z'])+":"+str(vd.getX())+":"+str(vd.getY())
+		mBroker.transmitdata(message)
+		message = ""
+		if(led1):
+			GPIO.output(17, GPIO.HIGH)
+			led1 = False
+		else:
+			GPIO.output(17, GPIO.LOW)
+			led1 = True
 
 	print("main: exiting the foreverloop")
 	return 0
