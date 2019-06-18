@@ -207,7 +207,7 @@ class VisualDetector:
 			#	name = "final%d.jpg"%count
 			#	cv2.imwrite(name, frame)
 
-	def getX(self):
-		return self.d_x
 	def getY(self):
-		return self.d_y
+		return self.d_x-(self.cam_width/2.0)
+	def getX(self):
+		return self.d_y-(self.cam_height/2.0)

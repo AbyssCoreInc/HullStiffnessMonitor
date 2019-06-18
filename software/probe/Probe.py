@@ -76,7 +76,8 @@ def main():
 	while (1):
 		vd.worker()
 		accel = accelerometer.getAccelerationVector()
-		message = str(accel['x'])+":"+str(accel['y'])+":"+str(accel['z'])+":"+str(vd.getX())+":"+str(vd.getY())
+		voltage = analog.getBatteryVoltage()
+		message = str(accel['x'])+":"+str(accel['y'])+":"+str(accel['z'])+":"+str(vd.getX())+":"+str(vd.getY())+":"+str(voltage)+":"
 		mBroker.transmitdata(message)
 		message = ""
 		if(led1):

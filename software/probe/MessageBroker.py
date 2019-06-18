@@ -2,12 +2,13 @@ import json
 from Configuration import *
 import time
 import datetime
+from array import array
 from datetime import datetime, date, timedelta
 from pytz import timezone
 from zeroconf import ServiceInfo, Zeroconf
 import netifaces as ni
 import socket
-
+#from socket import socket
 #class MessageBroker(service.Service, object):
 class MessageBroker:
 	server_ip = ""
@@ -25,7 +26,7 @@ class MessageBroker:
 	#	factory.protocol = BroadcastServerProtocol
 	#        self.factory = factory
 	#        self.portCallback = portCallback
-		
+
 
 		ni.ifaddresses('wlan0')
 		ip_addr = ni.ifaddresses('wlan0')[ni.AF_INET][0]['addr']
@@ -64,7 +65,7 @@ class MessageBroker:
 		print("app_ip: " + str(self.server_ip) + " app_port: "+str(self.server_port))
 		print("DataTransmitter.Init ready")
 
-	
+
 	#def privilegedStartService(self):
 	#	self.wsPort = reactor.listenTCP(0, self.factory)
 	#	port = self.wsPort.getHost().port
@@ -95,6 +96,7 @@ class MessageBroker:
 		#	s.connect((self.server_ip, self.server_port))
 		#	self.s = s
 		self.s = socket.create_connection((self.server_ip,str(self.server_port)))
+		#self.s = socket.connect(self.server_ip,str(self.server_port))
 		self.s.settimeout(2.0)
 		print("DataTransmitter.connect ready")
 
@@ -107,13 +109,21 @@ class MessageBroker:
 
 	def transmitdata(self,data):
 		print("DataTransmitter.transmitdata msg: "+data)
-		b = bytearray()
-		b.extend(map(ord, data))
+		#b = bytearray()
+		#b.extend(map(ord, data))
+		b = array('b')
+		data = data + "\n"
+		b.frombytes(data.encode())
 		try:
-			self.s.sendall(b)
+			#self.s.sendall(b)
+			#self.s = socket.connect(self.server_ip,str(self.server_port))
+			self.s.send(b)
+			#self.s.flush()
+			#self.s.close()
 			#self.s.sendall(b'asdasdasd')
 			print("DataTransmitter.transmitdata data away")
 			receive = self.s.recv(1024)
+			print("Received "+receive)
 		except:
 			print("some error in transmitdata")
 		print("DataTransmitter.transmitdata received:"+data)
