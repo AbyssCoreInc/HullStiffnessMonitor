@@ -1,6 +1,7 @@
 import json
 from Configuration import *
 import time
+from time import sleep
 import datetime
 from array import array
 from datetime import datetime, date, timedelta
@@ -17,21 +18,10 @@ class MessageBroker:
 	wsPort = None
 	wsInfo = None
 
-	#def __init__(self, factory, portCallback):
-	#def __init__(self, ip, port):
 	def __init__(self,port):
 		print("DataTransmitter.Init")
-	#	self.server_port = port
-	#	self.server_ip = ip
-	#	factory.protocol = BroadcastServerProtocol
-	#        self.factory = factory
-	#        self.portCallback = portCallback
-
-
 		ni.ifaddresses('wlan0')
 		ip_addr = ni.ifaddresses('wlan0')[ni.AF_INET][0]['addr']
-		#fqdn = socket.gethostname()
-		#ip_addr = socket.gethostbyname(fqdn)
 		desc = {'port': str(port), 'addr':ip_addr}
 		print(str(ip_addr))
 		info = ServiceInfo(
@@ -46,59 +36,59 @@ class MessageBroker:
 		self.zeroconf = Zeroconf()
 		self.zeroconf.register_service(info)
 
-		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-			s.bind((ip_addr, port))
-			s.listen()
-			conn, addr = s.accept()
-			with conn:
-				print('Connected by', addr)
-				while True:
-					data = conn.recv(1024)
-					print(data)
-					if not data or len(data) > 10:
-						break
-				(self.app_ip,self.server_port) = str(data).split(":")
-				self.server_ip = addr[0]
-				conn.sendall(b'got it')
-		if self.server_port[len(self.server_port)-1] == "'":
-			self.server_port = self.server_port[:-1]
-		print("app_ip: " + str(self.server_ip) + " app_port: "+str(self.server_port))
+		#with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+		#	s.bind((ip_addr, port))
+			#self.zeroconf = Zeroconf()
+			#self.zeroconf.register_service(info)
+		#	print("start listening")
+		#	s.listen()
+		#	self.zeroconf = Zeroconf()
+		#	self.zeroconf.register_service(info)
+		#	print("hearing something")
+		#	conn, addr = s.accept()
+		#	print("accepted connection")
+		#	with conn:
+		#		print('Connected by', addr)
+		#		while True:
+		#			data = conn.recv(1024)
+		#			print(data)
+		#			if not data or len(data) > 10:
+		#				break
+		#		(self.app_ip,self.server_port) = str(data).split(":")
+		#		self.server_ip = addr[0]
+		#		conn.sendall(b'got it')
+	#	if self.server_port[len(self.server_port)-1] == "'":
+	#		self.server_port = self.server_port[:-1]
+	#	print("app_ip: " + str(self.server_ip) + " app_port: "+str(self.server_port))
 		print("DataTransmitter.Init ready")
 
-
-	#def privilegedStartService(self):
-	#	self.wsPort = reactor.listenTCP(0, self.factory)
-	#	port = self.wsPort.getHost().port
-
-	#	fqdn = socket.gethostname()
-	#	ip_addr = socket.gethostbyname(fqdn)
-	#	hostname = fqdn.split('.')[0]
-
-	#	wsDesc = {'service': 'Verasonics Frame', 'version': '1.0.0'}
-	#	self.wsInfo = ServiceInfo('_hsm-probe._tcp.local.',
-	#			hostname + ' ' + self.ws_service_name + '._hsm-probe._tcp.local.',
-	#			socket.inet_aton(ip_addr), port, 0, 0, wsDesc, hostname + '.local.')
-	#	self.zeroconf.register_service(self.wsInfo)
-	#	self.portCallback(port)
-
-	#	return super(WebSocketManager, self).privilegedStartService()
-
-	#def stopService(self):
-	#	self.zeroconf.unregister_service(self.wsInfo)
-	#	self.wsPort.stopListening()
-	#	return super(WebSocketManager , self).stopService()
 	def getAppPort(self):
 		return self.server_port
 
-	def connect(self):
-		print("DataTransmitter.connect connecting to server ("+self.server_ip+")("+self.server_port+")")
+	def connect(self, ip, port):
+		self.server_ip = ip
+		self.server_port = port
+		print("DataTransmitter.connect connecting to server ("+self.server_ip+")("+str(self.server_port)+")")
 		#with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		#	s.connect((self.server_ip, self.server_port))
 		#	self.s = s
-		self.s = socket.create_connection((self.server_ip,str(self.server_port)))
-		#self.s = socket.connect(self.server_ip,str(self.server_port))
-		self.s.settimeout(2.0)
+		connected = False
+		while (not connected):
+			try:
+				self.s = socket.create_connection((self.server_ip,str(self.server_port)))
+				#self.s = socket.connect(self.server_ip,str(self.server_port))
+				self.s.settimeout(2.0)
+				connected = True
+			except:
+				print("connection failed trying again")
+				sleep(2.0)
+			
 		print("DataTransmitter.connect ready")
+	def reset(self):
+		print("DataTrasnmitter reseting connection")
+		self.s.close()
+		self.connect(self.server_ip,self.server_port)
+		print("DataTrasnmitter reset ready")
 
 	def getTimeStamp(self):
 		ts = time.time()
@@ -123,7 +113,11 @@ class MessageBroker:
 			#self.s.sendall(b'asdasdasd')
 			print("DataTransmitter.transmitdata data away")
 			receive = self.s.recv(1024)
-			print("Received "+receive)
+			print("Received "+str(receive))
+			if (str(receive) is "ok"):
+				return 0
+			else:
+				return -1
 		except:
 			print("some error in transmitdata")
 		print("DataTransmitter.transmitdata received:"+data)
