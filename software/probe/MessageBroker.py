@@ -9,8 +9,7 @@ from pytz import timezone
 from zeroconf import ServiceInfo, Zeroconf
 import netifaces as ni
 import socket
-#from socket import socket
-#class MessageBroker(service.Service, object):
+
 class MessageBroker:
 	server_ip = ""
 	server_port = 0
@@ -35,31 +34,6 @@ class MessageBroker:
 		print(info)
 		self.zeroconf = Zeroconf()
 		self.zeroconf.register_service(info)
-
-		#with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		#	s.bind((ip_addr, port))
-			#self.zeroconf = Zeroconf()
-			#self.zeroconf.register_service(info)
-		#	print("start listening")
-		#	s.listen()
-		#	self.zeroconf = Zeroconf()
-		#	self.zeroconf.register_service(info)
-		#	print("hearing something")
-		#	conn, addr = s.accept()
-		#	print("accepted connection")
-		#	with conn:
-		#		print('Connected by', addr)
-		#		while True:
-		#			data = conn.recv(1024)
-		#			print(data)
-		#			if not data or len(data) > 10:
-		#				break
-		#		(self.app_ip,self.server_port) = str(data).split(":")
-		#		self.server_ip = addr[0]
-		#		conn.sendall(b'got it')
-	#	if self.server_port[len(self.server_port)-1] == "'":
-	#		self.server_port = self.server_port[:-1]
-	#	print("app_ip: " + str(self.server_ip) + " app_port: "+str(self.server_port))
 		print("DataTransmitter.Init ready")
 
 	def getAppPort(self):
@@ -69,9 +43,7 @@ class MessageBroker:
 		self.server_ip = ip
 		self.server_port = port
 		print("DataTransmitter.connect connecting to server ("+self.server_ip+")("+str(self.server_port)+")")
-		#with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		#	s.connect((self.server_ip, self.server_port))
-		#	self.s = s
+
 		connected = False
 		while (not connected):
 			try:
@@ -99,28 +71,22 @@ class MessageBroker:
 
 	def transmitdata(self,data):
 		print("DataTransmitter.transmitdata msg: "+data)
-		#b = bytearray()
-		#b.extend(map(ord, data))
 		b = array('b')
 		data = data + "\n"
 		b.frombytes(data.encode())
 		try:
-			#self.s.sendall(b)
-			#self.s = socket.connect(self.server_ip,str(self.server_port))
 			self.s.send(b)
-			#self.s.flush()
-			#self.s.close()
-			#self.s.sendall(b'asdasdasd')
-			print("DataTransmitter.transmitdata data away")
+			#print("DataTransmitter.transmitdata data away")
 			receive = self.s.recv(1024)
 			print("Received "+str(receive))
-			if (str(receive) is "ok"):
+			if (len(receive) > 1):
+				print ("transmitData return 0")
 				return 0
 			else:
+				print ("transmitData return -1")
 				return -1
 		except:
 			print("some error in transmitdata")
-		print("DataTransmitter.transmitdata received:"+data)
 
 
 

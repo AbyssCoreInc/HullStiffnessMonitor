@@ -18,35 +18,40 @@ class ControlInterface:
 
 	def worker(self,q):
 		#self.mailbox = q
-		conn, addr = self.sock.accept()
-		print("accepted connection")
-		with conn:
-			print('Connected by', addr)
-			while True:
-				try:
-					data = conn.recv(1024)
-				except(socket.error, e):
-					err = e.args[0]
-					if(err == errno.EAGAIN or err == errno.EWOULDBLOCK):
-						sleep(1)
-						print("No data available")
-						continue
-					else:
-						# a "real" error occurred
-						print(e)
-						conn, addr = self.sock.accept()
-				if not data or len(data) > 10:
-					self.interpretMessage(str(data)+":"+str(addr[0]),q)
-					#conn.sendall(b'got it')
+		while True:
+			conn, addr = self.sock.accept()
+			print("accepted connection")
+			with conn:
+				print('Connected by', addr)
+				while True:
+					#print("ctrl")
+					try:
+						data = conn.recv(1024)
+					except(socket.error, e):
+						err = e.args[0]
+						if(err == errno.EAGAIN or err == errno.EWOULDBLOCK):
+							sleep(1)
+							print("No data available")
+							continue
+						else:
+							# a "real" error occurred
+							print(e)
+							print("accepting new connection")
+							conn, addr = self.sock.accept()
+					if (len(data) > 2):
+						self.interpretMessage(data.decode("ascii")+":"+str(addr[0]),q)
+						#conn.sendall(b'got it')
+						break
 
 
 	def interpretMessage(self, data, que):
 		import Probe
-		array = str(data).split(":")
+		print("interpretMessage "+data)
+		array = data.split(":")
 		if(len(array) > 1):
-			if (array[0] is "calibrate"):
+			if (array[0] == "calibrate"):
 				Probe.calibrate(array[1], que)
-			elif (array[0] is "record"):
+			elif (array[0] == "record"):
 				Probe.record(array[1], que)
-		if(len(array) > 2):
-			Probe.setAppAddress(array[2],array[1], que)
+			else:
+				Probe.setAppAddress(array[2],array[1], que)

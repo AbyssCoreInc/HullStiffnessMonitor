@@ -43,7 +43,8 @@ class VisualDetector:
 		self.d_y = 0
 		self.trail = numpy.zeros((self.cam_height, self.cam_width, 3), numpy.uint8)
 		self.previous_position = None
-
+		self.center_x = self.cam_width/2.0
+		self.center_y = self.cam_height/2.0
 		# allow the camera or video file to warm up
 		time.sleep(2.0)
 
@@ -57,7 +58,7 @@ class VisualDetector:
 
 		countours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 		#countours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-		print("countours: "+str(len(countours)))
+		#print("countours: "+str(len(countours)))
 		# only proceed if at least one contour was found
 		if len(countours) > 0:
 			# find the largest contour in the mask, then use
@@ -70,7 +71,7 @@ class VisualDetector:
 				center = int(moments["m10"] / moments["m00"]), int(moments["m01"] / moments["m00"])
 			else:
 				center = int(x), int(y)
-			print("dot center "+str(x)+","+str(y))
+			#print("dot center "+str(x)+","+str(y))
 			self.d_x = x
 			self.d_y = y
 			# only proceed if the radius meets a minimum size
@@ -129,11 +130,11 @@ class VisualDetector:
 			# if we are viewing a video and we did not grab a frame,
 			# then we have reached the end of the video
 		if frame is not None:
-			print("got frame")
+			#print("got frame")
 				#frame = imutils.resize(frame, width=600)
 				#print("blur")
 			blurred = cv2.GaussianBlur(frame, (3, 3), 0)
-			print("HSV")
+			#print("HSV")
 			hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 			h, s, v = cv2.split(hsv)
 			self.channels['hue'] = h
@@ -162,52 +163,11 @@ class VisualDetector:
 				self.channels['value'],
 			])
 			self.track(frame, self.channels['laser'])
-			print("construct mask")
-#				name = "hsv%d.jpg"%count
-#				cv2.imwrite(name, hsv)
-
-#				name = "trail%d.jpg"%count
-#				cv2.imwrite(name, self.trail)
-				# construct a mask for the color "green", then perform
-				# a series of dilations and erosions to remove any small
-				# blobs left in the mask
-			#	mask = cv2.inRange(hsv, self.redLower, self.redUpper)
-				#mask = cv2.erode(mask, None, iterations=2)
-			#	mask = cv2.dilate(mask, None, iterations=2)
-			#	name = "mask%d.jpg"%count
-			#	cv2.imwrite(name, mask)
-				#mask = cv2.erode(mask, None, iterations=2)
-				#mask = cv2.dilate(mask, None, iterations=2)
-			#	cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-			#	cnts = imutils.grab_contours(cnts)
-			#	print("find " + str(len(cnts)) + " countours")
-			#	center = None
-				# only proceed if at least one contour was found
-			#	if len(cnts) > 0:
-			#		c = max(cnts, key=cv2.contourArea)
-			#		((x, y), radius) = cv2.minEnclosingCircle(c)
-			#		M = cv2.moments(c)
-			#		center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-			#		print(center)
-			#		cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
-			#		cv2.circle(frame, center, 5, (0, 0, 255), -1)
-
-			#	self.pts.appendleft(center)
-
-			#	for i in range(1, len(self.pts)):
-					# if either of the tracked points are None, ignore
-					# them
-			#		if self.pts[i - 1] is None or self.pts[i] is None:
-			#			continue
-
-					# otherwise, compute the thickness of the line and
-					# draw the connecting lines
-			#		thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
-			#		cv2.line(frame, self.pts[i - 1], self.pts[i], (0, 0, 255), thickness)
-			#	name = "final%d.jpg"%count
-			#	cv2.imwrite(name, frame)
 
 	def getY(self):
-		return self.d_x-(self.cam_width/2.0)
+		return self.d_x-(self.center_x)
 	def getX(self):
-		return self.d_y-(self.cam_height/2.0)
+		return self.d_y-(self.center_y)
+	def setCenter(self):
+		self.center_x = self.d_x
+		self.center_y = self.d_y
