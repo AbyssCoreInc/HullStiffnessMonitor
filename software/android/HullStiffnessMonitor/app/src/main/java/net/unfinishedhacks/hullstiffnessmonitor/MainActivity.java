@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.ContentObservable;
+import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,21 +15,44 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.util.SortedList;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Vector;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 0x81;
     private static WifiManager wifiManager;
     private TextView mTextMessage;
+    private TextView accX;
+    private TextView accY;
+    private TextView accZ;
+    private TextView dotX;
+    private TextView dotY;
+    private TextView batV;
+    private Button calibBtn;
+    private DataView dataView;
+    private int tracking;
+    private int recording;
+    private double dot_x;
+    private double dot_y;
+    private double acc_x;
+    private double acc_y;
+    private double acc_z;
+    private double bat_v;
+    private double height;
+
     private Controller controller;
-    Thread serverThread = null;
-    private ServerThread serverThreadObject;
+    private Vector data;
+
     private WifiManager.LocalOnlyHotspotReservation mReservation;
     private final String TAG = "MainActivity";
 
@@ -51,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     };
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void turnOnHotspot() {
@@ -89,17 +114,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        height = 2000;
+        data = new Vector();
 
-        mTextMessage = (TextView) findViewById(R.id.message);
+        tracking = 0;
+        recording = 0;
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        this.controller = new Controller();
+        this.controller = new Controller(this);
         this.controller.updateConversationHandler = new Handler();
 
-        this.serverThreadObject = new ServerThread(this.controller);
-        this.serverThread = new Thread(this.serverThreadObject);
-        this.serverThread.start();
+
+        calibBtn = (Button) findViewById(R.id.calib_btn);
+        calibBtn.setOnClickListener(this);
 
         // seek permissions
         // Here, thisActivity is the current activity
@@ -129,13 +157,104 @@ public class MainActivity extends AppCompatActivity {
         }
 
         turnOnHotspot();
+        this.controller.startServerThread();
+    }
 
+    public void updateAcc(double x, double y, double z)
+    {
+        acc_x = x;
+        acc_y = y;
+        acc_z = z;
+
+        runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                // Stuff that updates the UI
+                accX.setText(String.format("%.2f", acc_x));
+                accY.setText(String.format("%.2f", acc_y));
+                accZ.setText(String.format("%.2f", acc_z));
+            }
+        });
+
+    }
+
+    public void updateDot(double x, double y)
+    {
+        dot_x = x;
+        dot_y = y;
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                dotX.setText(String.format("%.2f", dot_x));
+                dotY.setText(String.format("%.2f", dot_y));
+            }
+        });
+    }
+
+    public void updateVoltage(double v)
+    {
+        bat_v = v;
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                batV.setText(String.format("%.2f", bat_v));
+            }
+        });
+    }
+
+    public void updateDataSet(double a_y, double a_z, double d_x)
+    {
+        dataView.addData(new DataElement(a_y, a_z, d_x, height));
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                dataView.invalidate();
+            }
+        });
+    }
+
+    public void updateCalibrate(int stat)
+    {
+        tracking = stat;
+        String text = "Start Calib";
+        if (tracking == 1)
+            text = "Stop Calibr";
+        final String finalText = text;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                calibBtn.setText(finalText);
+            }
+        });
+    }
+    public void setTestMessage(String text)
+    {
+        mTextMessage.setText(text);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        serverThreadObject.close();
+        controller.stopServerThread();
     }
 
+
+    @Override
+    public void onClick(View view) {
+        System.out.println("MainActivity.onClick");
+        if(view.getId() == calibBtn.getId())
+        {
+            if (tracking == 0)
+               this.controller.startCalibrartion();
+            else
+                this.controller.stopCalibration();
+        }
+    }
+
+    public Controller getController() {
+        return controller;
+    }
 }

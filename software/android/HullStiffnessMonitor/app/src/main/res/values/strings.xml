@@ -3,4 +3,11 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
+    <string name="txt_X">X</string>
+    <string name="txt_Y">Y</string>
+    <string name="txt_Z">Z</string>
+    <string name="batV">BAT V</string>
+    <string name="acc_title">Accelerometer</string>
+    <string name="vis_title">Visual Tracker</string>
+    <string name="bat_title">Battery</string>
 </resources>
