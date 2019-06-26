@@ -1,0 +1,14 @@
+[Unit]
+Description=Hull Stiffness Monitor
+After=network.target
+
+[Service]
+User=root
+Group=pi
+ExecStart=/usr/bin/python3 /home/pi/HullStiffnessMonitor/software/probe/Probe.py > /var/log/hsm.log
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=hsm.service
+
