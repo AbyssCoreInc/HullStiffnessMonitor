@@ -1,6 +1,7 @@
 [Unit]
 Description=Hull Stiffness Monitor
-After=network.target
+BindsTo=dev-video0.device
+After=dev-video0.device
 
 [Service]
 User=root
